@@ -6,14 +6,40 @@ Apache Kafka is a distributed event store and stream-processing platform. It is 
 
 Run on Docker
 --
-Clone repo:
+Clone repository
 ```bash
 git clone https://github.com/mdobydullah/kafka-cmak-docker.git
 cd kafka-cmak-docker
 ```
-Run:
+Run
 ```bash
 docker compose up -d --build
+```
+
+Move into Kafka container
+```bash
+docker exec -it kafka /bin/sh
+```
+
+Go to Kafka `bin` folder
+
+```bash
+cd /opt/bitnami/kafka/bin
+```
+
+Create Kafka topic
+```bash
+kafka-topics.sh --create --topic topicName --bootstrap-server localhost:9092
+```
+
+Start Producer app (CLI)
+```bash
+kafka-console-producer.sh --topic topicName --bootstrap-server localhost:9092
+```
+
+Start Consumer app (CLI)
+```bash
+kafka-console-consumer.sh --topic topicName --from-beginning --bootstrap-server localhost:9092
 ```
 
 How Kafka Works
@@ -30,6 +56,7 @@ Kafka Streams
 
 CMAK
 --
+CMAK is a tool for managing Apache Kafka clusters.
 <p align="center">
     <img src="https://cdn.shouts.dev/media/402/cmak.png"/>
 </p>
