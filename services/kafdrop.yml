@@ -1,0 +1,10 @@
+kafdrop:
+  image: obsidiandynamics/kafdrop
+  container_name: kafdrop
+  ports:
+    - 9002:9000
+  environment:
+    KAFKA_BROKERCONNECT: kafka:9093
+  depends_on:
+    - kafka
+  restart: unless-stopped

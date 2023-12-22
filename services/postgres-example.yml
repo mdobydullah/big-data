@@ -1,0 +1,12 @@
+postgres:
+  image: debezium/example-postgres:latest
+  container_name: postgres
+  hostname: postgres
+  ports:
+    - 5435:5432
+  environment:
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=postgres
+  healthcheck:
+    test: pg_isready
+  restart: always
