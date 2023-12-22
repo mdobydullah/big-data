@@ -1,0 +1,122 @@
+version: '3'
+
+services:
+  # kafka
+  zookeeper:
+    image: bitnami/zookeeper:latest
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    volumes:
+      - "zookeeper_data:/bitnami"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    restart: unless-stopped
+
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      # For safety reasons, do not use this flag in a production environment.
+      - ALLOW_PLAINTEXT_LISTENER=yes # the listener will be without authentication and non-encrypted
+      - KAFKA_ADVERTISED_LISTENERS=INSIDE://kafka:9093,OUTSIDE://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      - KAFKA_LISTENERS=INSIDE://0.0.0.0:9093,OUTSIDE://0.0.0.0:9092
+      - KAFKA_INTER_BROKER_LISTENER_NAME=INSIDE
+    restart: unless-stopped
+
+  # visualization
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    container_name: kafdrop
+    ports:
+      - 9002:9000
+    environment:
+      KAFKA_BROKERCONNECT: kafka:9093
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  # database
+  postgres:
+    image: debezium/example-postgres:latest
+    container_name: postgres
+    hostname: postgres
+    ports:
+      - 5435:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    healthcheck:
+      test: pg_isready
+    restart: always
+
+  # debezium connector
+  connect:
+    image: debezium/connect:latest
+    container_name: debezium-connect
+    ports:
+      - 8083:8083
+      - 8080:8080
+    environment:
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+      BOOTSTRAP_SERVERS: kafka:9093
+      KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      INTERNAL_KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      NTERNAL_VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+    links:
+      - zookeeper
+      - postgres
+    depends_on:
+      - kafka
+      - zookeeper
+      - postgres
+    restart: unless-stopped
+
+  # debezium ui
+  debeziumui:
+    image: debezium/debezium-ui:latest
+    container_name: debezium-ui
+    ports:
+      - 5151:8080
+    environment:
+      - KAFKA_CONNECT_URIS=http://connect:8083
+    depends_on:
+      - connect
+    restart: unless-stopped
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    container_name: schema-registry
+    environment:
+      - SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL=zookeeper:2181
+      - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=kafka:9093
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+      - SCHEMA_REGISTRY_LISTENERS=http://schema-registry:8081,http://localhost:8081
+      - SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL=PLAINTEXT://kafka:9093
+      - SCHEMA_REGISTRY_AVRO_COMPATIBILITY_LEVEL=full
+      - SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR=1
+    ports:
+      - 8181:8181
+      - 8081:8081
+    depends_on: [zookeeper, kafka]
+
+volumes:
+  zookeeper_data:
+    driver: local
+  kafka_data:
+    driver: local

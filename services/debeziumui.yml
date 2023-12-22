@@ -1,0 +1,10 @@
+debeziumui:
+  image: debezium/debezium-ui:latest
+  container_name: debezium-ui
+  ports:
+    - 5151:8080
+  environment:
+    - KAFKA_CONNECT_URIS=http://connect:8083
+  depends_on:
+    - connect
+  restart: unless-stopped

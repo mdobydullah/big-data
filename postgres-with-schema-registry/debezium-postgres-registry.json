@@ -1,0 +1,22 @@
+{
+  "name": "postgres-registry-connector",
+  "config": {
+      "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+      "database.hostname": "postgres",
+      "database.port": "5432",
+      "database.user": "postgres",
+      "database.password": "postgres",
+      "database.dbname" : "postgres",
+      "database.server.name": "dbserver1",
+      "database.whitelist": "inventory",
+      "table.include.list": "inventory.customers",
+      "database.history.kafka.bootstrap.servers": "http://kafka:9092",
+      "database.history.kafka.topic": "schema-changes.customers",
+      "publication.autocreate.mode":"filtered",
+      "key.converter": "io.confluent.connect.avro.AvroConverter",
+      "value.converter": "io.confluent.connect.avro.AvroConverter",
+      "key.converter.schema.registry.url": "http://schema-registry:8081",
+      "value.converter.schema.registry.url": "http://schema-registry:8081",
+      "value.converter.schemas.enable": false
+  }
+}

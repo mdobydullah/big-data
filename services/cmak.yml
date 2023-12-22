@@ -1,0 +1,15 @@
+cmak:
+  image: vimagick/cmak
+  container_name: cmak
+  ports:
+    - "9001:9000"
+  environment:
+    - ZK_HOSTS=zookeeper:2181
+    - KAFKA_MANAGER_AUTH_ENABLED=true
+    - KAFKA_MANAGER_USERNAME=admin
+    - KAFKA_MANAGER_PASSWORD=admin
+  depends_on:
+    - zookeeper
+  healthcheck:
+    test: curl -f http://127.0.0.1:9001/api/health || exit 1
+  restart: unless-stopped
