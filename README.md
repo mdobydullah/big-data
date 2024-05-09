@@ -13,3 +13,4 @@ Services
 Examples
 --
 - [kafka-python-example](https://github.com/mdobydullah/kafka-python-example)
+- [kafka-nodejs-example](https://github.com/mdobydullah/kafka-nodejs-example)
